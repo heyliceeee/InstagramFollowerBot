@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from selenium import webdriver
+from selenium.common import ElementClickInterceptedException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -78,6 +79,13 @@ class InstaFollower:
     def follow(self):
         """
         Follow the followers
-        :return:
         """
-        pass
+        all_buttons = self.driver.find_elements(By.CSS_SELECTOR, ".followers-scroll button") # Find all buttons
+        for button in all_buttons: # For each button
+            try: # Try to click the button
+                button.click() # Click the button
+                time.sleep(1) # Wait for 1 second
+            except ElementClickInterceptedException: # If the button is not clickable, continue
+                # An "Unfollow?" dialog opened (you already follow this account).
+                cancel = self.driver.find_element(By.XPATH, "//button[contains(text(), 'Cancel')]") # Find the cancel button
+                cancel.click() # Click the cancel button
