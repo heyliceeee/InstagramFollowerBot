@@ -1,7 +1,6 @@
 import os
 from dotenv import load_dotenv
 from selenium import webdriver
-from selenium.common import TimeoutException, NoSuchElementException, ElementClickInterceptedException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -12,7 +11,7 @@ load_dotenv()
 BASE_URL = os.getenv("BASE_URL") # URL to share a naan
 EMAIL = os.getenv("SHARE_A_NAAN_EMAIL") # Email to share a naan
 PASSWORD = os.getenv("SHARE_A_NAAN_PASSWORD") # Password to share a naan
-SIMULAR_ACCOUNT = os.getenv("SIMULAR_ACCOUNT") # The account whose followers you will follow
+SIMILAR_ACCOUNT = os.getenv("SIMILAR_ACCOUNT") # The account whose followers you will follow
 
 class InstaFollower:
     def __init__(self):
@@ -31,18 +30,18 @@ class InstaFollower:
         """
         Login to the share-a-naan website
         """
-        self.driver.get(BASE_URL)  # go to the website
+        self.driver.get(f"{BASE_URL}/login")  # go to the website
         wait = WebDriverWait(self.driver, 5)  # Create a new wait object
 
-        email_input = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/aside/div/form/input[1]")))  # Wait for the email input field to appear
+        email_input = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div/form/input[1]")))  # Wait for the email input field to appear
         email_input.clear()  # Clear the email input field
         email_input.send_keys(EMAIL)  # Enter the email address from the .env file
 
-        password_input = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/aside/div/form/input[2]")))  # Wait for the password input field to appear
+        password_input = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div/form/input[2]")))  # Wait for the password input field to appear
         password_input.clear()  # Clear the password input field
         password_input.send_keys(PASSWORD)  # Enter the password from the .env file
 
-        submit_btn = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/aside/div/form/button")))  # Wait for the Submit button to appear
+        submit_btn = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div/form/button")))  # Wait for the Submit button to appear
         submit_btn.click()  # Click the Submit button
 
         try:  # If the Not Now button doesn't appear, continue
@@ -63,30 +62,22 @@ class InstaFollower:
     def find_followers(self):
         """
         Find the followers of the account whose followers you will follow
-        :return: followers
         """
-        pass
+        self.driver.get(f"{BASE_URL}/u/{SIMILAR_ACCOUNT}/followers") # go to the followers page
+        wait = WebDriverWait(self.driver, 5)  # Create a new wait object
+
+        try: # Try to find the modal
+            modal = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[3]'))) # Find the modal
+            print("Find the followers list")
+
+            for _ in range(10): # Load the followers list 10 times
+                self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", modal) # Scroll to the bottom of the modal
+                time.sleep(1) # Wait for 1 second
+        except:  # If the modal doesn't appear, continue
+            print("Modal didn't appear, continuing...")
     def follow(self):
         """
         Follow the followers
         :return:
         """
         pass
-    def retry(func, retries=7, description=None):
-        """
-        Retry a function if it fails
-        :param func: a function to retry
-        :param retries: retry count
-        :param description: description of the function
-        :return: function result
-        """
-        for attempt in range(1, retries + 1):  # Retry up to retries times
-            try:  # Try to execute the function
-                print(f"Attempt {attempt}/{retries} → {description}")  # Print the attempt number
-                return func()  # Return the function result
-
-            except (TimeoutException, NoSuchElementException, ElementClickInterceptedException, Exception) as e:
-                print(f"Failed attempt {attempt}: {e}")  # Print the failure message
-                time.sleep(1)  # Wait for 1 second before retrying
-
-        raise Exception(f"❌ All retries failed for: {description}")  # If all retries fail, raise an exception
